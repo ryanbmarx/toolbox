@@ -1,5 +1,5 @@
 /*
-    SOME HELPFUL BOUNDS:
+    SOME HELPFUL BOUNDING BOXES:
     Chicago: [42.029693, -87.969885],[41.603010, -87.466239]
     Cook County: [42.155799,-88.3121067],[41.402917,-87.4080117]
 
@@ -17,7 +17,7 @@ module.exports = function drawVictimsMap(container, data){
             minZoom: 10,
             maxZoom: 16,
             renderer: L.canvas({padding:.05}), // You'll thank me for this when we start plotting dots
-            // maxBounds:L.latLngBounds([42.029693, -87.969885],[41.603010, -87.466239]) // Limit map to, roughly, the Cook County boundary. No getting lost on the map here.
+            maxBounds:L.latLngBounds([42.029693, -87.969885],[41.603010, -87.466239]) // Limit map to, roughly, the Cook County boundary. No getting lost on the map here.
         }
     );
 
