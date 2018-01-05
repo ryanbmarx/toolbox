@@ -140,7 +140,7 @@ class BarChart{
 	        // Maybe we don't want all those lines on the axis
 	        if (app.options.removeYAxisTickMarks){
 	        	d3.select('.y.axis').selectAll('.tick line').remove();
-	        	d3.select('.y.axis').selectAll('.tick text').attr('dx', '.3em');
+	        	d3.select('.y.axis').selectAll('.tick text').attr('dx', '.7em');
 	        }
 
 		}

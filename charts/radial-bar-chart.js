@@ -14,7 +14,7 @@ RadialBarChart({
 import * as d3 from 'd3';
 import getTribColor from '../utils/getTribColors.js';
 import {areaRadial} from 'd3-shape';
-import scaleRadial from '../utils/scale-radial.js';
+import scaleRadial from './scale-radial.js';
 
 
 // Cribbed from https://bl.ocks.org/mbostock/5479367295dfe8f21002fc71d6500392

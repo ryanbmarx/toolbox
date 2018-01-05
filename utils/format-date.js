@@ -1,7 +1,7 @@
 import getJSDateFromExcel from './get-js-date-from-excel.js';
 import {timeFormat} from 'd3';
 
-function formatDate(d, formatString, useAPStyle=true){
+module.exports = function formatDate(d, formatString, useAPStyle=true){
 	/*
 		Takes a datetime object (d) and formats it using d3.timeFormat(). 
 		It then, optionally, seeks poorly abbreviated months and replaces 
