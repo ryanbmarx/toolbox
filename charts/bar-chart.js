@@ -72,8 +72,8 @@ class BarChart{
 
 		// If the user has defined min or max values for the x range, such as starting at zero,
 		// then use those values. Otherwise, find them.
-		const 	yMax = app.options.yMax ? parseFloat(app.options.yMax) : d3.max(data, d => parseFloat(d[y])),
-				yMin = app.options.yMin ? parseFloat(app.options.yMin) : d3.min(data, d => parseFloat(d[y]));
+		const 	yMax = typeof(app.options.yMax) == "number" ? parseFloat(app.options.yMax) : d3.max(data, d => parseFloat(d[y])),
+				yMin = typeof(app.options.yMin) == "number" ? parseFloat(app.options.yMin) : d3.min(data, d => parseFloat(d[y]));
 
 		//Scale functions
 		//This is the y scale used to size and position the bars
@@ -85,8 +85,8 @@ class BarChart{
 
 		// If the user has defined min or max values for the x range, such as starting at zero,
 		// then use those values. Otherwise, find them.
-		const 	xMax = app.options.xMax ? parseFloat(app.options.xMax) : d3.max(data, d => parseFloat(d[x])),
-				xMin = app.options.xMin ? parseFloat(app.options.xMin) : d3.min(data, d => parseFloat(d[x]));
+		const 	xMax = typeof(app.options.xMax) == "number" ? parseFloat(app.options.xMax) : d3.max(data, d => parseFloat(d[x])),
+				xMin = typeof(app.options.xMin) == "number" ? parseFloat(app.options.xMin) : d3.min(data, d => parseFloat(d[x]));
 
 		// Make the x scale
 		const xScale = d3.scaleBand()
