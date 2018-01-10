@@ -1,44 +1,43 @@
 /*
 new BarChart({
-    container: document.querySelector('.histogram'),
-    dataset: histoData_arr, // Will be charted AS IS. All transforms, etc., should be done by now.
-    xAttribute:'year', // The key of the x attribute in the data set
-    yAttribute:'deaths', // The key of the y attribute in the data set
-    innerMargins:{ top:0,right:0,bottom:15,left:(bbox.width / 18) }, // This will inset the chart from the base container (which should be controlled by CSS)
+    container: document.querySelector(<container selector|string>),
+    dataset: <data|iterable object>, // Will be charted AS IS. All transforms, etc., should be done by now.
+    innerMargins:{ top:0,right:0,bottom:0,left:0 }, // This will inset the chart from the base container (which should be controlled by CSS)
     barFillColor:"#aaa", // must be a valid color syntax, #HEX, rgba(), etc.
-    axisFormatter: {
-    	// Must be either a formatting function or a string 
-    	// to be used with d3.format(<string>)(<number>) on the axes 
-    	// If it's a date/time series, d3.timeFormat must be passed in here.
-        yAxis: false,
-        xAxis: yearFormat
+    xAxis:{
+        dataAttribute:<x attribute key|string>, // The key of the x attribute in the data set
+        axisFormatter: false,
+        minValue:0,
+        maxValue:false, // Useful for making multiple charts match in scale
+        showAxis: true,
+        removeAxisDomain: true,// the straight line with the axis
+        removeAxisTicks: false, // Set to true to remove the lines (not numbers)
+        totalTicks: 5 // Remember, with d3 axes, this number is a suggestions
     },
-    xMin: false,
-    xMax: false,
-    yMin:false, // Most charts should start at zero
-    yMax: false,
-    showYAxis:true,
-    removeYAxisDomain: false,
-    removeYAxisTickMarks: false,
-    showXAxis:true,
-    removeXAxisDomain: true,
-    removeXAxisTickMarks: true,
-    ticks:{
-        yAxis:3,
-        xAxis: histoData_arr.length
+    yAxis:{
+        dataAttribute:<x attribute key|string>, // The key of the y attribute in the data set
+        axisFormatter:false,
+        minValue:0,
+        maxValue:false, // Useful for making multiple charts match in scale
+        showAxis: true,
+        removeAxisDomain: true, // the straight line with the axis
+        removeAxisTicks: false, // Set to true to remove the lines (not numbers)
+        totalTicks: 5 // Remember, with d3 axes, this number is a suggestions
     },
     meta:{
-        headline:false,
+        headline:false, // You must make room for this in the margins
         xAxisLabel: false,
         yAxisLabel: false,
-        sources: false,
-        credit: false
+        sources: false, // You must make room for this in the margins
+        credit: false // You must make room for this in the margins
     }
 });
 
 */
 
 import * as d3 from 'd3';
+import addMeta from './add-meta.js';
+import addAxes from './add-axes.js';
 
 class BarChart{
 	constructor(options){
@@ -57,14 +56,14 @@ class BarChart{
 		// ----------------------------------
 
 		const 	container = d3.select(app._container),
-				bbox = 	app._container.getBoundingClientRect(), 
-				height=bbox.height,
-				width=bbox.width,
+				bbox = app._container.getBoundingClientRect(), 
+				height = bbox.height,
+				width = bbox.width,
 				margin = app.options.innerMargins,
 				innerHeight = height - margin.top - margin.bottom,
 				innerWidth = width - margin.right - margin.left,
-				y = app.options.yAttribute, 
-				x = app.options.xAttribute;
+				y = app.options.yAxis.dataAttribute, 
+				x = app.options.xAxis.dataAttribute;
 
 		// ----------------------------------
 		// MAKE SCALES
@@ -72,8 +71,8 @@ class BarChart{
 
 		// If the user has defined min or max values for the x range, such as starting at zero,
 		// then use those values. Otherwise, find them.
-		const 	yMax = typeof(app.options.yMax) == "number" ? parseFloat(app.options.yMax) : d3.max(data, d => parseFloat(d[y])),
-				yMin = typeof(app.options.yMin) == "number" ? parseFloat(app.options.yMin) : d3.min(data, d => parseFloat(d[y]));
+		const 	yMax = typeof(app.options.yAxis.maxValue) == "number" ? parseFloat(app.options.yAxis.maxValue) : d3.max(data, d => parseFloat(d[y])),
+				yMin = typeof(app.options.yAxis.minValue) == "number" ? parseFloat(app.options.yAxis.minValue) : d3.min(data, d => parseFloat(d[y]));
 
 		//Scale functions
 		//This is the y scale used to size and position the bars
@@ -85,8 +84,8 @@ class BarChart{
 
 		// If the user has defined min or max values for the x range, such as starting at zero,
 		// then use those values. Otherwise, find them.
-		const 	xMax = typeof(app.options.xMax) == "number" ? parseFloat(app.options.xMax) : d3.max(data, d => parseFloat(d[x])),
-				xMin = typeof(app.options.xMin) == "number" ? parseFloat(app.options.xMin) : d3.min(data, d => parseFloat(d[x]));
+		const 	xMax = typeof(app.options.xAxis.maxValue) == "number" ? parseFloat(app.options.xAxis.maxValue) : d3.max(data, d => parseFloat(d[x])),
+				xMin = typeof(app.options.xAxis.minValue) == "number" ? parseFloat(app.options.xAxis.minValue) : d3.min(data, d => parseFloat(d[x]));
 
 		// Make the x scale
 		const xScale = d3.scaleBand()
@@ -114,73 +113,64 @@ class BarChart{
 		// APPEND <g> ELEMENTS FOR SCALES 
 		// ----------------------------------
 
-		if (app.options.showYAxis){
-			// Define the y axis and add a tick formatter if a format string is define in the options.
-			const yAxis = d3.axisLeft(yScale);
+		addAxes(app, svg, yScale, xScale);
 
-			// If the user has defined a format function
-			if (app.options.axisFormatter.yAxis){
-				const yFormatter = app.options.axisFormatter.yAxis;
-				yAxis.tickFormat(yFormatter)
-			}
-			// If the user has defined the desired # ticks ...
-			if (app.options.ticks.yAxis){
-				yAxis.ticks(app.options.ticks.yAxis);
-			}
-		   svg.append('g')
-				.attr("class", "y axis")
-				.attr(`transform`,`translate(${margin.left},${margin.top})`)
-				.call(yAxis);
+		// if (app.options.yAxis.showAxis){
+		// 	// Define the y axis and add a tick formatter if a format string is define in the options.
+		// 	const yAxis = d3.axisLeft(yScale);
+
+		// 	// If the user has defined a format function
+		// 	if (app.options.yAxis.axisFormatter) yAxis.tickFormat(app.options.yAxis.axisFormatter)
+
+		// 	// If the user has defined the desired # ticks ...
+		// 	if (app.options.yAxis.totalTicks) yAxis.ticks(app.options.yAxis.totalTicks);
+
+		//    svg.append('g')
+		// 		.attr("class", "y axis")
+		// 		.attr(`transform`,`translate(${margin.left},${margin.top})`)
+		// 		.call(yAxis);
 	        
-			// Maybe we don't want all those lines on the axis
-	        if (app.options.removeYAxisDomain){
-	        	d3.select('.y.axis').selectAll('.domain').remove();
-	        }
+		// 	// Maybe we don't want all those lines on the axis
+	 //        if (app.options.yAxis.removeAxisDomain) d3.select('.y.axis').selectAll('.domain').remove();
 
-	        // Maybe we don't want all those lines on the axis
-	        if (app.options.removeYAxisTickMarks){
-	        	d3.select('.y.axis').selectAll('.tick line').remove();
-	        	d3.select('.y.axis').selectAll('.tick text').attr('dx', '.7em');
-	        }
+	 //        // Maybe we don't want all those lines on the axis
+	 //        if (app.options.yAxis.removeAxisTicks){
+	 //        	d3.select('.y.axis').selectAll('.tick line').remove();
+	 //        	d3.select('.y.axis').selectAll('.tick text').attr('dx', '.7em');
+	 //        }
 
-		}
+		// }
 		
-		if (app.options.showXAxis){
-			// Create an x axis if the option requires it
+		// if (app.options.xAxis.showAxis){
+		// 	// Create an x axis if the option requires it
 
-			// Define the x axis 
-			const xAxis = d3.axisBottom(xScale);
+		// 	// Define the x axis 
+		// 	const xAxis = d3.axisBottom(xScale);
 
-			// ... add a tick formatter if a format fucntion is supplied in the options.
-			if (app.options.axisFormatter.xAxis){
-				const xFormatter = app.options.axisFormatter.xAxis;
-				xAxis.tickFormat(xFormatter)
-			}
+		// 	// ... add a tick formatter if a format fucntion is supplied in the options.
+		// 	if (app.options.xAxis.axisFormatter) xAxis.tickFormat(app.options.xAxis.axisFormatter);
 
-			// If the user has defined the desired # ticks ...
-			if (app.options.ticks.xAxis){
-				xAxis.ticks(app.options.ticks.xAxis);	
-			}
-			// Now, append the axis elements to the SVG
-		   svg.append('g')
-				.attr("class", "x axis")
-				.attr(`transform`,`translate(${ margin.left },${ margin.top + innerHeight })`)
-				.transition()
-					.duration(app.options.transitionTime)
-					.call(xAxis);
+		// 	// If the user has defined the desired # ticks ...
+		// 	if (app.options.xAxis.totalTicks) xAxis.ticks(app.options.xAxis.totalTicks);	
 
-			// Maybe we don't want all those lines on the axis
-	        if (app.options.removeXAxisDomain){
-	        	d3.select('.x.axis').selectAll('.domain').remove();
-	        }
+		// 	// Now, append the axis elements to the SVG
+		//    svg.append('g')
+		// 		.attr("class", "x axis")
+		// 		.attr(`transform`,`translate(${ margin.left },${ margin.top + innerHeight })`)
+		// 		.transition()
+		// 			.duration(app.options.transitionTime)
+		// 			.call(xAxis);
+
+		// 	// Maybe we don't want all those lines on the axis
+	 //        if (app.options.xAxis.removeAxisDomain) d3.select('.x.axis').selectAll('.domain').remove();
 	        
-			// Maybe we don't want all those lines on the axis
-	        if (app.options.removeXAxisTickMarks){
-	        	d3.select('.x.axis').selectAll('.tick line').remove();
-	        	d3.select('.x.axis').selectAll('.tick text').attr('dy', '.3em');
-	        }
+		// 	// Maybe we don't want all those lines on the axis
+	 //        if (app.options.xAxis.removeAxisTicks){
+	 //        	d3.select('.x.axis').selectAll('.tick line').remove();
+	 //        	d3.select('.x.axis').selectAll('.tick text').attr('dy', '.3em');
+	 //        }
 
-		}
+		// }
 
 		// ----------------------------------
 		// ADD SOME FRIGGIN' BARS!
@@ -218,65 +208,66 @@ class BarChart{
 		// ----------------------------------
 		// ADD THE META LABELING
 		// ----------------------------------
+		addMeta(app, svg)	
 		
-		if (app.meta){
-			// Add the <g> for the labeling, and hang some base styles on it.
-			// Only text attr/style that differs from this needs to be applied.
-			const labels = svg.append('g')
-				.classed('chart-labels', true)
-				.style('font-family','Arial, sans-serif')
-				.style('font-size','13px')
-				.style('font-weight','bold')
-				.style('margin','0 0 0 0')
-				.style('line-height', '1.3em')
-				.attr('text-anchor', 'middle')
-				.attr('dy', '1em');
+		// if (app.meta){
+		// 	// Add the <g> for the labeling, and hang some base styles on it.
+		// 	// Only text attr/style that differs from this needs to be applied.
+		// 	const labels = svg.append('g')
+		// 		.classed('chart-labels', true)
+		// 		.style('font-family','Arial, sans-serif')
+		// 		.style('font-size','13px')
+		// 		.style('font-weight','bold')
+		// 		.style('margin','0 0 0 0')
+		// 		.style('line-height', '1.3em')
+		// 		.attr('text-anchor', 'middle')
+		// 		.attr('dy', '1em');
 
-			if (app.meta.headline){
-				labels.append('text')
-					.classed('chart-labels__headline', true)
-					.text(`${app.meta.headline}`)
-					.style('font-size','19px')
-					.attr('x', 0)
-					.attr('y', 0)
-					.attr('text-anchor', 'start');
-			}
-			if (app.meta.xAxisLabel){
-				labels.append('text')
-					.classed('chart-labels__xAxisLabel', true)
-					.text(`${app.meta.xAxisLabel}`)
-					.attr('x', margin.left + (innerWidth / 2))
-					.attr('y', height)
-					.attr('dy', '-.3em');
+		// 	if (app.meta.headline){
+		// 		labels.append('text')
+		// 			.classed('chart-labels__headline', true)
+		// 			.text(`${app.meta.headline}`)
+		// 			.style('font-size','19px')
+		// 			.attr('x', 0)
+		// 			.attr('y', 0)
+		// 			.attr('text-anchor', 'start');
+		// 	}
+		// 	if (app.meta.xAxisLabel){
+		// 		labels.append('text')
+		// 			.classed('chart-labels__xAxisLabel', true)
+		// 			.text(`${app.meta.xAxisLabel}`)
+		// 			.attr('x', margin.left + (innerWidth / 2))
+		// 			.attr('y', height)
+		// 			.attr('dy', '-.3em');
 					
-			}
-			if (app.meta.yAxisLabel){
-				labels.append('text')
-					.classed('chart-labels__yAxisLabel', true)
-					.text(`${app.meta.yAxisLabel}`)
-					.attr('x', 0)
-					.attr('y', margin.top + (innerHeight / 2))
-					.attr('transform', `rotate(-90, 0, ${margin.top + (innerHeight / 2)})`)
-									.attr('dy', '1em');
-			}
+		// 	}
+		// 	if (app.meta.yAxisLabel){
+		// 		labels.append('text')
+		// 			.classed('chart-labels__yAxisLabel', true)
+		// 			.text(`${app.meta.yAxisLabel}`)
+		// 			.attr('x', 0)
+		// 			.attr('y', margin.top + (innerHeight / 2))
+		// 			.attr('transform', `rotate(-90, 0, ${margin.top + (innerHeight / 2)})`)
+		// 							.attr('dy', '1em');
+		// 	}
 
-			if (app.meta.sources){
-				container.append('p')
-					.classed('chart-labels__source', true)
-					.style('font-weight','normal')
-					.text(`${app.meta.sources}`);
-			}
+		// 	if (app.meta.sources){
+		// 		container.append('p')
+		// 			.classed('chart-labels__source', true)
+		// 			.style('font-weight','normal')
+		// 			.text(`${app.meta.sources}`);
+		// 	}
 
-			if(app.meta.credit){
-				container.append('p')
-					.classed('chart-labels__credit', true)
-					.text(`${app.meta.credit}`)
-					.style('font-family','Arial, sans-serif')
-					.style('font-size','13px')
-					.style('margin','7px 0 0 0')
-					.style('line-height', '1.3em');
-			}
-		}
+		// 	if(app.meta.credit){
+		// 		container.append('p')
+		// 			.classed('chart-labels__credit', true)
+		// 			.text(`${app.meta.credit}`)
+		// 			.style('font-family','Arial, sans-serif')
+		// 			.style('font-size','13px')
+		// 			.style('margin','7px 0 0 0')
+		// 			.style('line-height', '1.3em');
+		// 	}
+		// }
 
      }
 }
