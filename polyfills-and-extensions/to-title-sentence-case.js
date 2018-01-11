@@ -8,7 +8,7 @@ String.prototype.toSentenceCase = function(){
 String.prototype.toTitleCase = function(){
 	// returns string in title case (Every word capitalized)
 	const words_arr = this.split(' '),
-		doNotCap = ["a", "an", "the", "and", "but", "or", "for", "nor", "etc.", "on", "at", "to", "from", "by", "with"];
+		doNotCap = ["a", "an", "aka", "a.k.a.", "the", "and", "but", "or", "for", "nor", "etc.", "on", "at", "to", "from", "by", "with"];
 
 	let retval="";
 
